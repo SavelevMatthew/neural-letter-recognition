@@ -5,8 +5,9 @@ import collections
 
 
 class neuralNetwork:
-    def __init__(self, alphabet, input_nodes=1, hidden_nodes=1, output_nodes=1,
-                 learning_rate=0.3):
+    def __init__(self, alphabet, train_data_file, input_nodes=1,
+                 hidden_nodes=1, output_nodes=1, learning_rate=0.3,
+                 learning_cycles=2):
         self.inodes = input_nodes
         self.hnodes = hidden_nodes
         self.onodes = output_nodes
@@ -79,3 +80,6 @@ class neuralNetwork:
             self.trained[s] += data.get(s)
         self.w_ho = numpy.asfarray(data.get('who'))
         self.w_ih = numpy.asfarray(data.get('wih'))
+
+    def retrain(self):
+        pass
