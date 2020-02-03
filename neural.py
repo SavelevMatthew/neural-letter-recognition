@@ -12,7 +12,7 @@ class neuralNetwork:
         self.hnodes = hidden_nodes
         self.onodes = output_nodes
         self.data_file = train_data_file
-
+        self.learning_cycles = learning_cycles
         self.alphabet = alphabet
         self.trained = {}
         for s in alphabet:
@@ -45,14 +45,15 @@ class neuralNetwork:
         self.w_ih += numpy.dot((h_errors * h_outputs * (1.0 - h_outputs)),
                                numpy.transpose(inputs)) * self.lr
 
-    def train(self, inputs_list, char):
+    def train(self, inputs_list, char, base_add=True):
         targets = self.get_target(char)
         self.raw_train(inputs_list, targets)
         self.trained[char] += 1
-        with open(self.data_file, 'a') as f:
-            s = char + ', ' + ', '.join(map(self.zeros_to_hundreds,
-                                            inputs_list.tolist())) + '\n'
-            f.write(s)
+        if base_add:
+            with open(self.data_file, 'a') as f:
+                s = char + ', ' + ', '.join(map(self.zeros_to_hundreds,
+                                                inputs_list.tolist())) + '\n'
+                f.write(s)
 
     def zeros_to_hundreds(self, s):
         return str(int((s - 0.01) / 0.99 * 255))
@@ -98,7 +99,13 @@ class neuralNetwork:
         self.w_ih = numpy.asfarray(data.get('wih'))
 
     def retrain(self):
-        pass
+        for _ in range(self.learning_cycles):
+            with open(self.data_file, 'r') as f:
+                for line in f:
+                    parts = line.split(',')
+                    char = parts[0]
+                    inputs = (numpy.asfarray(parts[1:]) / 255.0 * 0.99) + 0.01
+                    self.train(inputs, char, False)
 
     def get_target(self, char):
         index = self.alphabet.index(char)

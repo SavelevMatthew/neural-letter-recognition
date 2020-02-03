@@ -1,5 +1,7 @@
 import imagecropper
-from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QPushButton
+import numpy as np
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QPushButton,
+                             QMenuBar, QAction)
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QTimer, pyqtSlot
 from PyQt5.QtGui import QFont, QImage, QPixmap, QPainter, QPen, QBrush
 
@@ -26,6 +28,12 @@ class Application(QMainWindow):
         self.cropper = imagecropper.ImageCropper(scaled_w, scaled_h)
 
         self.swap_modes()
+        main_menu = self.menuBar()
+        net_menu = main_menu.addMenu('Network')
+        retrain_action = QAction('Retrain', self)
+        net_menu.addAction(retrain_action)
+        retrain_action.triggered.connect(self.net.retrain)
+
         self.show()
 
     def closeEvent(self, event):
@@ -55,9 +63,20 @@ class Application(QMainWindow):
         self.sidebar.box.setText(self.learning_letter)
         self.canvas.clear()
 
+    def query(self):
+        inputs = self.cropper.handle_image(self.canvas.image)
+        outputs = self.net.query(inputs)
+        index = np.argmax(outputs)
+        result = self.net.alphabet[index]
+        self.sidebar.box.setText(result)
+        self.canvas.clear()
+
     def handle_image(self):
-        if self.modes[self.mode] == 'Training':
+        mode = self.modes[self.mode]
+        if mode == 'Training':
             self.learn()
+        elif mode == 'Testing':
+            self.query()
 
 
 class Canvas(QWidget):
