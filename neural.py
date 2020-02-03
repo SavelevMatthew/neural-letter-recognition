@@ -11,9 +11,12 @@ class neuralNetwork:
         self.inodes = input_nodes
         self.hnodes = hidden_nodes
         self.onodes = output_nodes
+        self.data_file = train_data_file
 
         self.alphabet = alphabet
-        self.trained = collections.Counter()
+        self.trained = {}
+        for s in alphabet:
+            self.trained[s] = 0
 
         self.lr = learning_rate
 
@@ -24,7 +27,7 @@ class neuralNetwork:
 
         self.activation_function = lambda x: special.expit(x)
 
-    def train(self, inputs_list, target_list):
+    def raw_train(self, inputs_list, target_list):
         inputs = numpy.array(inputs_list, ndmin=2).T
         targets = numpy.array(target_list, ndmin=2).T
 
@@ -41,6 +44,18 @@ class neuralNetwork:
                                numpy.transpose(h_outputs)) * self.lr
         self.w_ih += numpy.dot((h_errors * h_outputs * (1.0 - h_outputs)),
                                numpy.transpose(inputs)) * self.lr
+
+    def train(self, inputs_list, char):
+        targets = self.get_target(char)
+        self.raw_train(inputs_list, targets)
+        self.trained[char] += 1
+        with open(self.data_file, 'a') as f:
+            s = char + ', ' + ', '.join(map(self.zeros_to_hundreds,
+                                            inputs_list.tolist())) + '\n'
+            f.write(s)
+
+    def zeros_to_hundreds(self, s):
+        return str(int((s - 0.01) / 0.99 * 255))
 
     def query(self, inputs_list):
         inputs = numpy.array(inputs_list, ndmin=2).T
@@ -68,6 +83,7 @@ class neuralNetwork:
             f.seek(0)
             json.dump(data, f, indent=4)
             f.truncate()
+        print('Network saved!')
 
     def restore(self, data):
         self.inodes = data.get('inputs')
@@ -75,11 +91,17 @@ class neuralNetwork:
         self.onodes = data.get('outputs')
         self.lr = data.get('lr')
         self.alphabet = data.get('alphabet')
-        self.trained = collections.Counter()
+        self.trained = {}
         for s in self.alphabet:
-            self.trained[s] += data.get(s)
+            self.trained[s] = int(data.get(s))
         self.w_ho = numpy.asfarray(data.get('who'))
         self.w_ih = numpy.asfarray(data.get('wih'))
 
     def retrain(self):
         pass
+
+    def get_target(self, char):
+        index = self.alphabet.index(char)
+        targets = numpy.zeros([len(self.alphabet)]) + 0.01
+        targets[index] = 0.99
+        return targets

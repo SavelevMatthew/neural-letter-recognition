@@ -1,3 +1,4 @@
+import imagecropper
 from PyQt5.QtWidgets import QMainWindow, QWidget, QLabel, QPushButton
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QTimer, pyqtSlot
 from PyQt5.QtGui import QFont, QImage, QPixmap, QPainter, QPen, QBrush
@@ -11,6 +12,9 @@ class Application(QMainWindow):
         self.scaled_h = scaled_h
         self.caption = caption
         self.net = net
+        self.modes = ['Training', 'Testing']
+        self.mode = len(self.modes) - 1
+        self.learning_letter = None
 
         super().__init__()
         self.setFixedSize(w, h)
@@ -19,8 +23,41 @@ class Application(QMainWindow):
         self.canvas = Canvas(h, h, self)
         self.sidebar = SideBar(w - h, h, self, 'rgba(100,100,100,100%)',
                                self.canvas)
+        self.cropper = imagecropper.ImageCropper(scaled_w, scaled_h)
 
+        self.swap_modes()
         self.show()
+
+    def closeEvent(self, event):
+        self.net.save()
+
+    def swap_modes(self):
+        self.mode = (self.mode + 1) % len(self.modes)
+        mode = self.modes[self.mode]
+        self.sidebar.mode.setText('Mode: {}'.format(mode))
+        self.canvas.clear()
+        if mode == 'Training':
+            self.generate_letter()
+            self.sidebar.box.setText(self.learning_letter)
+        else:
+            self.learning_letter = None
+            self.sidebar.box.setText('')
+
+    def generate_letter(self):
+        least_used = [k for k, v in sorted(self.net.trained.items(),
+                                           key=lambda item: item[1])][0]
+        self.learning_letter = least_used
+
+    def learn(self):
+        inputs = self.cropper.handle_image(self.canvas.image)
+        self.net.train(inputs, self.learning_letter)
+        self.generate_letter()
+        self.sidebar.box.setText(self.learning_letter)
+        self.canvas.clear()
+
+    def handle_image(self):
+        if self.modes[self.mode] == 'Training':
+            self.learn()
 
 
 class Canvas(QWidget):
@@ -97,6 +134,7 @@ class SideBar(QWidget):
         self.bg = bg
         padding = 10
         self.canvas = canvas
+        self.app = parent
 
         super().__init__()
         self.setParent(parent)
@@ -143,6 +181,7 @@ class SideBar(QWidget):
         font.setBold(True)
         font.setPointSize(h / 6 / 5)
         btn.setFont(font)
+        btn.clicked.connect(self.app.swap_modes)
         self.mode = btn
         self.mode.show()
 
@@ -182,6 +221,7 @@ class SideBar(QWidget):
         font.setBold(True)
         font.setPointSize(h / 6 / 1.5)
         btn.setFont(font)
+        btn.clicked.connect(self.app.handle_image)
         self.done = btn
         self.done.show()
 
