@@ -48,8 +48,8 @@ class neuralNetwork:
     def train(self, inputs_list, char, base_add=True):
         targets = self.get_target(char)
         self.raw_train(inputs_list, targets)
-        self.trained[char] += 1
         if base_add:
+            self.trained[char] += 1
             with open(self.data_file, 'a') as f:
                 s = char + ', ' + ', '.join(map(self.zeros_to_hundreds,
                                                 inputs_list.tolist())) + '\n'
