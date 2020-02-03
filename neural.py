@@ -88,7 +88,7 @@ class neuralNetwork:
 
     def restore(self, data):
         self.inodes = data.get('inputs')
-        self.hnodes = data.get('hiddens')
+        self.hnodes = data.get('hidden')
         self.onodes = data.get('outputs')
         self.lr = data.get('lr')
         self.alphabet = data.get('alphabet')
@@ -103,6 +103,7 @@ class neuralNetwork:
                                         (self.hnodes, self.inodes))
         self.w_ho = numpy.random.normal(0.0, pow(self.onodes, -0.5),
                                         (self.onodes, self.hnodes))
+
         for _ in range(self.learning_cycles):
             with open(self.data_file, 'r') as f:
                 for line in f:

@@ -1,6 +1,6 @@
 # neural-letter-recognition
 # Author: Matthew Savelev
-# Version: 1.0
+# Version: 1.0.1
 # Description:
 Simple letter-recognition system.
 Use training mode and draw showed letter to teach the net. Press done when you're done with drawing to show you next one.
