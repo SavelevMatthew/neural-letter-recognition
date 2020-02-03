@@ -99,6 +99,10 @@ class neuralNetwork:
         self.w_ih = numpy.asfarray(data.get('wih'))
 
     def retrain(self):
+        self.w_ih = numpy.random.normal(0.0, pow(self.hnodes, -0.5),
+                                        (self.hnodes, self.inodes))
+        self.w_ho = numpy.random.normal(0.0, pow(self.onodes, -0.5),
+                                        (self.onodes, self.hnodes))
         for _ in range(self.learning_cycles):
             with open(self.data_file, 'r') as f:
                 for line in f:
